@@ -1,18 +1,17 @@
 from typing import Any
-
 import requests
 import psycopg2
-from psycopg2 import errors
 
 
-def data_vacancies_company(company_ids: list) -> list[dict[str, Any]]:
+def data_vacancies_company(company_ids: list[int]) -> list[dict[str, Any]]:
     data = []
 
     for company_id in company_ids:
         params = {
             "per_page": 100,
             "page": 0,
-            'employer_id': company_id
+            'employer_id': company_id,
+            'only_with_salary': True
         }
         headers = {
             'HH-User-Agent': 'CourseWork_5_parser_hh_to_SQL (mrlivedance@vk.com)'
@@ -44,12 +43,6 @@ def data_vacancies_company(company_ids: list) -> list[dict[str, Any]]:
     return data
 
 
-# start = time.perf_counter()
-# res = data_vacancies_company([1740, 3529, 115, 733, 15478, 1057, 3776, 3127, 2748, 136929])
-# end = time.perf_counter()
-# print(f'время выполнения кода: {end - start} {[len(i["vacancies"]) for i in res]}')
-
-
 def create_database_test(database_name: str, params: dict):
     """Создание базы данных и таблиц для сохранения данных о каналах и видео."""
 
@@ -57,9 +50,15 @@ def create_database_test(database_name: str, params: dict):
     conn.autocommit = True
     cur = conn.cursor()
 
-    cur.execute(f"DROP DATABASE {database_name}")
-    cur.execute(f"CREATE DATABASE {database_name}")
+    cur.execute("SELECT datname FROM pg_database WHERE datname = %s", (database_name,))
+    result = cur.fetchone()
+    if result:
+        # Если база данных существует, удаляем ее
+        cur.execute(f"DROP DATABASE {database_name}")
 
+    cur.execute(f"CREATE DATABASE {database_name}")
+    conn.commit()
+    cur.close()
     conn.close()
 
     conn = psycopg2.connect(dbname=database_name, **params)
@@ -77,16 +76,40 @@ def create_database_test(database_name: str, params: dict):
     with conn.cursor() as cur:
         cur.execute("""
                     CREATE TABLE vacancies (
-                    id_vacancies int PRIMARY KEY,
                     id_company INT REFERENCES company(id_company),
+                    id_vacancies int PRIMARY KEY,
                     name varchar(100) NOT NULL ,
-                    salary_from int NOT NULL,
-                    salary_to int NOT NULL,
+                    salary_from int,
+                    salary_to int,
                     currency varchar(5),
                     url_vacancies varchar(100),
-                    description varchar(300)
+                    requirement text,
+                    responsibility text
+                    
                     );
                     """)
 
     conn.commit()
     conn.close()
+
+
+def filling_table(database_name: str, params: dict, data_vacancies: list[dict[str, Any]]) -> None:
+    conn = psycopg2.connect(dbname=database_name, **params)
+    with conn.cursor() as cur:
+        for data in data_vacancies:
+            company = data['company']
+            vacancies = data['vacancies']
+            cur.execute('INSERT INTO company VALUES (%s, %s, %s, %s)',
+                        (company['id'], company['name'], company['description'][:300], company['alternate_url']))
+            for vacancy in vacancies:
+                cur.execute(
+                    """INSERT INTO vacancies 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (company['id'], vacancy['id'], vacancy['name'], vacancy['salary'].get('from', None),
+                     vacancy['salary'].get('to', None), vacancy['salary'].get('currency', None),
+                     vacancy['alternate_url'], vacancy['snippet'].get('requirement', None),
+                     vacancy['snippet'].get('responsibility', None)
+                     )
+                )
+        conn.commit()
+        conn.close()

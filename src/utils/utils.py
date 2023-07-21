@@ -3,11 +3,12 @@ import requests
 import psycopg2
 
 
-def data_vacancies_company(company_ids: list[int]) -> list[dict[str, Any]]:
+def data_vacancies_company(company_ids: list[int], city_id: int = None) -> list[dict[str, Any]]:
     data = []
 
     for company_id in company_ids:
         params = {
+            'areas': city_id,
             "per_page": 100,
             "page": 0,
             'employer_id': company_id,
@@ -111,5 +112,5 @@ def filling_table(database_name: str, params: dict, data_vacancies: list[dict[st
                      vacancy['snippet'].get('responsibility', None)
                      )
                 )
-        conn.commit()
-        conn.close()
+    conn.commit()
+    conn.close()

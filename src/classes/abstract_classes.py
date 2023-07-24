@@ -30,6 +30,6 @@ class DataBase(ABC):
         pass
 
     @abstractmethod
-    def get_vacancies_with_keyword(self):
+    def get_vacancies_with_keyword(self, keywords):
         """получает список всех вакансий, в названии которых содержатся переданные в метод слова, например Python"""
         pass

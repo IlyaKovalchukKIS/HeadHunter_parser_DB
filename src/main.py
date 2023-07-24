@@ -18,7 +18,7 @@ if __name__ == '__main__':
           'Сбор вакансий занимает некоторое время (~1.5 МИН)')
 
     data = data_vacancies_company(id_company, id_city)
-    create_database(database_name='vacancies_data', params=config, sql_scripts=sql_scripts)
+    create_database(database_name=name_db, params=config, sql_scripts=sql_scripts)
     filling_table(database_name=name_db, params=config, data_vacancies=data, sql_scripts=sql_scripts)
 
     while True:

@@ -45,7 +45,7 @@ def data_vacancies_company(company_ids: list[int], city_id: int = None) -> list[
     return data
 
 
-def create_database(database_name: str, params: dict) -> None:
+def create_database(database_name: str, params: dict, sql_scripts: dict) -> None:
     """Создание базы данных и таблиц для сохранения данных о каналах и видео."""
 
     conn = psycopg2.connect(**params)
@@ -66,54 +66,52 @@ def create_database(database_name: str, params: dict) -> None:
     conn = psycopg2.connect(dbname=database_name, **params)
 
     with conn.cursor() as cur:
-        cur.execute("""
-            CREATE TABLE company (
-                    id_company int PRIMARY KEY,
-                    name varchar(30),
-                    description varchar(300),
-                    url_company varchar(100) NOT NULL
-                    );
-        """)
+        cur.execute(sql_scripts.get('cell1'))
 
     with conn.cursor() as cur:
-        cur.execute("""
-                    CREATE TABLE vacancies (
-                    id_company INT REFERENCES company(id_company),
-                    id_vacancies int PRIMARY KEY,
-                    name varchar(100) NOT NULL ,
-                    salary_from int,
-                    salary_to int,
-                    currency varchar(5),
-                    url_vacancies varchar(100),
-                    requirement text,
-                    responsibility text
-                    
-                    );
-                    """)
+        cur.execute(sql_scripts.get('cell2'))
 
     conn.commit()
     conn.close()
 
 
-def filling_table(database_name: str, params: dict, data_vacancies: list[dict[str, Any]]) -> None:
+def filling_table(database_name: str, params: dict, sql_scripts: dict, data_vacancies: list[dict[str, Any]]) -> None:
     """Функция для заполнения базы данных"""
     conn = psycopg2.connect(dbname=database_name, **params)
     with conn.cursor() as cur:
         for data in data_vacancies:
             company = data['company']
             vacancies = data['vacancies']
-            cur.execute('INSERT INTO company VALUES (%s, %s, %s, %s)',
+            cur.execute(sql_scripts.get('cell3'),
                         (company['id'], company['name'], company['description'][:300], company['alternate_url']))
             for vacancy in vacancies:
-                cur.execute(
-                    """INSERT INTO vacancies 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (id_vacancies) DO NOTHING""",
-                    (company['id'], vacancy['id'], vacancy['name'], vacancy['salary'].get('from', None),
-                     vacancy['salary'].get('to', None), vacancy['salary'].get('currency', None),
-                     vacancy['alternate_url'], vacancy['snippet'].get('requirement', None),
-                     vacancy['snippet'].get('responsibility', None)
-                     )
-                )
+                cur.execute(sql_scripts.get('cell4'),
+                            (company['id'], vacancy['id'], vacancy['name'], vacancy['salary'].get('from', None),
+                             vacancy['salary'].get('to', None), vacancy['salary'].get('currency', None),
+                             vacancy['alternate_url'], vacancy['snippet'].get('requirement', None),
+                             vacancy['snippet'].get('responsibility', None)
+                             )
+                            )
     conn.commit()
     conn.close()
+
+
+def get_sql_code(filename: str) -> dict:
+    """Функция для считывания файла со скриптами sql и создание на основе их словаря"""
+    with open(filename, 'r', encoding='utf-8') as file:
+        content = file.read()
+
+    cells = {}
+    current_cell = None
+
+    for line in content.splitlines():
+        if line.startswith('--@'):
+            current_cell = line[3:]
+            cells[current_cell] = []
+        elif current_cell is not None:
+            cells[current_cell].append(line.strip())
+
+    for key, value in cells.items():
+        cells[key] = " ".join(value[1:])
+
+    return cells

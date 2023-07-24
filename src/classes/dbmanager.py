@@ -92,6 +92,7 @@ class DBManager(DataBase):
                                     'url_vacancies'])
 
     def get_vacancies_with_keyword(self, keywords: str) -> str:
+        """Получение списка вакансий по ключевому слову."""
         with self.__conn.cursor() as cur:
             cur.execute("""
             SELECT id_company, id_vacancies, name, salary_from, salary_to, currency, url_vacancies FROM vacancies

@@ -1,22 +1,28 @@
+import os
+
 from src.classes.dbmanager import DBManager
 from config.config_func import config
-from src.utils.utils import create_database, data_vacancies_company, filling_table
+from src.utils.utils import create_database, data_vacancies_company, filling_table, get_sql_code
 
 if __name__ == '__main__':
+    QUERIES = os.path.abspath('sql_queries/queries.sql')
+    DATABASE_CONFIG = os.path.abspath('config/database.ini')
+
     id_company = [1740, 3529, 115, 733, 15478, 1057, 3776, 3127, 2748, 136929]
     id_city = None
     name_db = 'vacancies_data'
-    config = config()
+    config = config(filename=DATABASE_CONFIG)
+    sql_scripts = get_sql_code(QUERIES)
 
     print('Добро пожаловать в программу создания базы данных на основе компаний HH.\n'
           'Сбор вакансий занимает некоторое время (~1.5 МИН)')
 
     data = data_vacancies_company(id_company, id_city)
-    create_database(database_name='vacancies_data', params=config)
-    filling_table(database_name=name_db, params=config, data_vacancies=data)
+    create_database(database_name='vacancies_data', params=config, sql_scripts=sql_scripts)
+    filling_table(database_name=name_db, params=config, data_vacancies=data, sql_scripts=sql_scripts)
 
     while True:
-        db_manager = DBManager(db_name=name_db, params=config)
+        db_manager = DBManager(db_name=name_db, params=config, sql_scripts=sql_scripts)
 
         user_input = input('1 - отобразить вакансии список всех вакансий у каждой компании\n'
                            '2 - получить первые 400 вакансий в базе данных\n'

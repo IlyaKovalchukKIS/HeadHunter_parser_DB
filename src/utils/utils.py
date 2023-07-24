@@ -4,6 +4,7 @@ import psycopg2
 
 
 def data_vacancies_company(company_ids: list[int], city_id: int = None) -> list[dict[str, Any]]:
+    """Подключается по API к HH.ru, собирает компании и все вакансии этой компаний в список data"""
     data = []
 
     for company_id in company_ids:
@@ -44,10 +45,10 @@ def data_vacancies_company(company_ids: list[int], city_id: int = None) -> list[
     return data
 
 
-def create_database_test(database_name: str, params: dict):
+def create_database(database_name: str, params: dict) -> None:
     """Создание базы данных и таблиц для сохранения данных о каналах и видео."""
 
-    conn = psycopg2.connect(dbname='postgres', **params)
+    conn = psycopg2.connect(**params)
     conn.autocommit = True
     cur = conn.cursor()
 
@@ -95,6 +96,7 @@ def create_database_test(database_name: str, params: dict):
 
 
 def filling_table(database_name: str, params: dict, data_vacancies: list[dict[str, Any]]) -> None:
+    """Функция для заполнения базы данных"""
     conn = psycopg2.connect(dbname=database_name, **params)
     with conn.cursor() as cur:
         for data in data_vacancies:
@@ -105,7 +107,8 @@ def filling_table(database_name: str, params: dict, data_vacancies: list[dict[st
             for vacancy in vacancies:
                 cur.execute(
                     """INSERT INTO vacancies 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (id_vacancies) DO NOTHING""",
                     (company['id'], vacancy['id'], vacancy['name'], vacancy['salary'].get('from', None),
                      vacancy['salary'].get('to', None), vacancy['salary'].get('currency', None),
                      vacancy['alternate_url'], vacancy['snippet'].get('requirement', None),

@@ -11,9 +11,9 @@ if __name__ == '__main__':
     print('Добро пожаловать в программу создания базы данных на основе компаний HH.\n'
           'Сбор вакансий занимает некоторое время (~1.5 МИН)')
 
-    # data = data_vacancies_company(id_company, id_city)
-    # create_database(database_name='vacancies_data', params=config)
-    # filling_table(database_name=name_db, params=config, data_vacancies=data)
+    data = data_vacancies_company(id_company, id_city)
+    create_database(database_name='vacancies_data', params=config)
+    filling_table(database_name=name_db, params=config, data_vacancies=data)
 
     while True:
         db_manager = DBManager(db_name=name_db, params=config)

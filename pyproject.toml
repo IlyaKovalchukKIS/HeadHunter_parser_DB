@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "coursework-database-vacancies"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "coursework_database_vacancies"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+psycopg2 = "^2.9.6"
+requests = "^2.31.0"
+tqdm = "^4.65.0"
+pandas = "^2.0.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

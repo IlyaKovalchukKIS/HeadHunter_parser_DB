@@ -1,9 +1,12 @@
+from typing import Any
+
 import psycopg2
 import pandas as pd
 from src.classes.abstract_classes import DataBase
 
 
-class DBManager:
+class DBManager(DataBase):
+    __slots__ = ['__conn']
 
     def __init__(self, db_name, params):
         self.__conn = psycopg2.connect(dbname=db_name, **params)
@@ -18,6 +21,11 @@ class DBManager:
             print('\nСоединение с базой данных закрыто\n')
             self.__conn.close()
 
+    @staticmethod
+    def __table_pd(data: list[tuple[Any, ...]], columns):
+        df = pd.DataFrame(data, columns=columns)
+        return df.to_string(index=False)
+
     @property
     def get_companies_and_vacancies_count(self):
         with self.__conn.cursor() as cur:
@@ -30,8 +38,7 @@ class DBManager:
             ORDER BY count_vacancies DESC;
             """)
             result = cur.fetchall()
-            df = pd.DataFrame(result, columns=['id_company', 'name', 'count_vacancies'])
-            return df.to_string(index=False)
+            return self.__table_pd(result, ['id_company', 'name', 'count_vacancies'])
 
     @property
     def get_all_vacancies(self):
@@ -43,9 +50,8 @@ class DBManager:
             ORDER BY company.name
             """)
             result = cur.fetchall()[:400]
-            df = pd.DataFrame(result,
-                              columns=['company_name', ' vacancies_name', 'salary_from', 'salary_to', 'url_vacancies'])
-            return df.to_string(index=False)
+            return self.__table_pd(result,
+                                   ['company_name', ' vacancies_name', 'salary_from', 'salary_to', 'url_vacancies'])
 
     @property
     def get_avg_salary(self):
@@ -62,9 +68,7 @@ class DBManager:
             FROM company
             """)
             result = cur.fetchall()
-            df = pd.DataFrame(result,
-                              columns=['company_name', 'salary_from', 'salary_to', 'url_company'])
-            return df.to_string(index=False)
+            return self.__table_pd(result, ['company_name', 'salary_from', 'salary_to', 'url_company'])
 
     @property
     def get_vacancies_with_higher_salary(self):
@@ -78,10 +82,9 @@ class DBManager:
             ORDER BY salary_from
             """)
             result = cur.fetchall()
-            df = pd.DataFrame(result,
-                              columns=['id_company', 'id_vacancies', 'name', 'salary_from', 'salary_to', 'currency',
-                                       'url_vacancies'])
-            return df.to_string(index=False)
+            return self.__table_pd(result,
+                                   ['id_company', 'id_vacancies', 'name', 'salary_from', 'salary_to', 'currency',
+                                    'url_vacancies'])
 
     def get_vacancies_with_keyword(self, keywords: str):
         with self.__conn.cursor() as cur:
@@ -91,7 +94,6 @@ class DBManager:
             ORDER BY vacancies.salary_to
             """, (keywords, keywords, keywords))
             result = cur.fetchall()
-            df = pd.DataFrame(result,
-                              columns=['id_company', 'id_vacancies', 'name', 'salary_from', 'salary_to', 'currency',
-                                       'url_vacancies'])
-            return df.to_string(index=False)
+            return self.__table_pd(result,
+                                   ['id_company', 'id_vacancies', 'name', 'salary_from', 'salary_to', 'currency',
+                                    'url_vacancies'])

@@ -50,5 +50,5 @@ if __name__ == '__main__':
 
         if user_input == '5':
             user_input = input('Введите ключевое слово для поиска среди вакансий\n'
-                               '>>>')
+                               '>>> ')
             print(f"\n{db_manager.get_vacancies_with_keyword(user_input)}\n")

@@ -16,6 +16,7 @@
 1. psycopg2
 2. pandas
 3. requests
+4. tqdm
 
 ### Зависимости проекта хранятся а файле [pyproject.toml](https://github.com/IlyaKovalchukKIS/CourseWork_database_vacancies/blob/main/pyproject.toml)
 

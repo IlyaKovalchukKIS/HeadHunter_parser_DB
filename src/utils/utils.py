@@ -1,6 +1,7 @@
 from typing import Any
 import requests
 import psycopg2
+from tqdm import tqdm
 
 
 def data_vacancies_company(company_ids: list[int], city_id: int = None) -> list[dict[str, Any]]:
@@ -21,26 +22,19 @@ def data_vacancies_company(company_ids: list[int], city_id: int = None) -> list[
         response_company = requests.get(f'https://api.hh.ru/employers/{company_id}', headers=headers)
         data_company = response_company.json()
         all_vacancies = []
+        total_pages = 19
 
-        while True:
-            response_vacancies = requests.get("https://api.hh.ru/vacancies", params=params, headers=headers)
-            data_vacancies = response_vacancies.json()
-            vacancies = data_vacancies.get('items', [])
-            total_pages = None
-            try:
-                total_pages = data_vacancies['pages'] if data_vacancies['pages'] < 20 else 19
-            except KeyError:
-                print(data_vacancies)
+        with tqdm(total=total_pages, desc=f"Fetching vacancies for company {company_id}", unit=" page") as pbar:
+            while params['page'] < total_pages:
+                response_vacancies = requests.get("https://api.hh.ru/vacancies", params=params, headers=headers)
+                data_vacancies = response_vacancies.json()
+                total_pages = data_vacancies['pages'] if data_vacancies['pages'] < 19 else 19
+                vacancies = data_vacancies.get('items', [])
+                all_vacancies.extend(vacancies)
+                params['page'] += 1
+                pbar.update(1)
 
-            if params['page'] == total_pages:
-                data.append({'company': data_company,
-                             'vacancies': all_vacancies})
-
-                break
-
-            params['page'] += 1
-            # time.sleep(0.01)
-            all_vacancies.extend(vacancies)
+        data.append({'company': data_company, 'vacancies': all_vacancies})
 
     return data
 

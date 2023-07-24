@@ -21,7 +21,7 @@
 
 ### Запуск программы осуществляется из файла [main.py](https://github.com/IlyaKovalchukKIS/CourseWork_database_vacancies/blob/main/src/main.py)
 
-### Для подключения к базе данных нужно будет в файле [config/database.ini](https://github.com/IlyaKovalchukKIS/CourseWork_database_vacancies/blob/main/src/config/database.ini) прописать данные для подключения к локально базе данных
+### Для подключения к базе данных нужно будет в файле [config/database.ini](https://github.com/IlyaKovalchukKIS/CourseWork_database_vacancies/blob/main/src/config/database.ini) прописать данные для подключения к локальной базе данных
 
 ### Работа с пользователем осуществляется через командную строку
 

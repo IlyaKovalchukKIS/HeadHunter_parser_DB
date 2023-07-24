@@ -1,10 +1,7 @@
-import os
 from configparser import ConfigParser
 
-filename_config = os.path.join(os.path.dirname(__file__), 'database.ini')
 
-
-def config(filename=filename_config, section="postgresql"):
+def config(filename: str, section="postgresql") -> dict:
     # create a parser
     parser = ConfigParser()
     # read config_func file

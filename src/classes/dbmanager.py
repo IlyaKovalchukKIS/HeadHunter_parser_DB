@@ -12,22 +12,23 @@ class DBManager(DataBase):
         self.__conn = psycopg2.connect(dbname=db_name, **params)
 
     @property
-    def conn(self):
+    def conn(self) -> type(psycopg2):
         return self.__conn
 
     @conn.setter
-    def conn(self, param: str):
+    def conn(self, param: str) -> None:
         if param.lower() == 'close':
             print('\nСоединение с базой данных закрыто\n')
             self.__conn.close()
 
     @staticmethod
-    def __table_pd(data: list[tuple[Any, ...]], columns):
+    def __table_pd(data: list[tuple[Any, ...]], columns) -> str:
         df = pd.DataFrame(data, columns=columns)
         return df.to_string(index=False)
 
     @property
-    def get_companies_and_vacancies_count(self):
+    def get_companies_and_vacancies_count(self) -> str:
+        """Получает список всех компаний и количество вакансий у каждой компании."""
         with self.__conn.cursor() as cur:
             cur.execute("""
             SELECT company.id_company, company.name, (
@@ -41,7 +42,9 @@ class DBManager(DataBase):
             return self.__table_pd(result, ['id_company', 'name', 'count_vacancies'])
 
     @property
-    def get_all_vacancies(self):
+    def get_all_vacancies(self) -> str:
+        """Получает список всех вакансий с указанием названия компании,
+        названия вакансии и зарплаты и ссылки на вакансию."""
         with self.__conn.cursor() as cur:
             cur.execute("""
             SELECT company.name, vacancies.name, vacancies.salary_from, vacancies.salary_to, vacancies.url_vacancies
@@ -54,7 +57,8 @@ class DBManager(DataBase):
                                    ['company_name', ' vacancies_name', 'salary_from', 'salary_to', 'url_vacancies'])
 
     @property
-    def get_avg_salary(self):
+    def get_avg_salary(self) -> str:
+        """Получает среднюю зарплату по вакансиям."""
         with self.__conn.cursor() as cur:
             cur.execute("""
             SELECT company.name, 
@@ -71,7 +75,8 @@ class DBManager(DataBase):
             return self.__table_pd(result, ['company_name', 'salary_from', 'salary_to', 'url_company'])
 
     @property
-    def get_vacancies_with_higher_salary(self):
+    def get_vacancies_with_higher_salary(self) -> str:
+        """Получает список всех вакансий, у которых зарплата выше средней по всем вакансиям."""
         with self.__conn.cursor() as cur:
             cur.execute("""
             SELECT id_company, id_vacancies, name, salary_from, salary_to, currency, url_vacancies FROM vacancies
@@ -86,13 +91,13 @@ class DBManager(DataBase):
                                    ['id_company', 'id_vacancies', 'name', 'salary_from', 'salary_to', 'currency',
                                     'url_vacancies'])
 
-    def get_vacancies_with_keyword(self, keywords: str):
+    def get_vacancies_with_keyword(self, keywords: str) -> str:
         with self.__conn.cursor() as cur:
             cur.execute("""
             SELECT id_company, id_vacancies, name, salary_from, salary_to, currency, url_vacancies FROM vacancies
-            WHERE vacancies.name LIKE(%s) or vacancies.requirement LIKE(%s) or vacancies.responsibility LIKE(%s)
+            WHERE vacancies.name ILIKE(%s) or vacancies.requirement ILIKE(%s) or vacancies.responsibility ILIKE(%s)
             ORDER BY vacancies.salary_to
-            """, (keywords, keywords, keywords))
+            """, (f'%{keywords}%', f'%{keywords}%', f'%{keywords}%'))
             result = cur.fetchall()
             return self.__table_pd(result,
                                    ['id_company', 'id_vacancies', 'name', 'salary_from', 'salary_to', 'currency',
